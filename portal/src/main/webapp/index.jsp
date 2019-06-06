@@ -1,7 +1,7 @@
 <%
     String url = request.getRequestURL().toString();
     String baseUrl = url.substring(0, url.length() - request.getRequestURI().length()) + request.getContextPath();
-    baseUrl = baseUrl.replace("https://", "").replace("http://", "");
+    baseUrl = baseUrl.replace("https://", "").replace("http://", "").replace(".edu", ".edu:8443");
 %>
 <%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core" %>
 <%@ page import="org.mskcc.cbio.portal.util.GlobalProperties" %>

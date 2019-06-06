@@ -163,10 +163,15 @@
                 </form>
 
                 <% } else if (authenticationMethod.equals("saml")) { %>
-                  <p>
-                    <!-- removed the hard-coded saml registration html and calling GlobalProperties instead -->
-                    <button id="saml_login_button" type="button" class="btn btn-danger btn-lg" onclick="window.location = 'saml/login?idp=<%= GlobalProperties.getSamlIdpMetadataEntityid() %>'" >
-                    <%= GlobalProperties.getLoginSamlRegistrationHtml() %></button>
+                   <p>
+                      <button id="saml_login_button" type="button" class="btn btn-default btn-lg"
+                              onclick="window.location = 'https://partnershealthcare.okta.com/home/partnershealthcare_cbioportal_1/0oal2sxaiVZQNMcVr296/alnl31yt5X4KbKXyi296'">
+                          Sign in via Partners
+                      </button>
+                      <button id="register_button" type="button" class="btn btn-default btn-lg"
+                              onclick="window.location = 'https://goo.gl/zG0vPQ'">
+                          Register for Access
+                      </button>&nbsp;&nbsp;
                   </p>
                 </div>
 
@@ -181,8 +186,8 @@
 
                 <% } else if (authenticationMethod.equals("ad") || authenticationMethod.equals("ldap")){ %>
                   <div>
-                    <label for=username>Username: </label> <input type='text' id='username' name='username' value=''>  <br/>
-                    <label for=password>Password: </label> <input type='password' name='password' /> <br/>
+                    <label for=username>Username: </label> <input type='text' id='username' name='j_username' value=''>  <br/>
+                    <label for=password>Password: </label> <input type='password' name='j_password' /> <br/>
                     <input name="submit" type="submit" value="submit" />
                   </div>
                 </div>

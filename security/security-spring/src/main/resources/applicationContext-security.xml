@@ -348,12 +348,14 @@
         <b:constructor-arg>
             <b:bean class="org.springframework.security.saml.metadata.MetadataGenerator">
                 <b:property name="entityId" value="${saml.sp.metadata.entityid}"/>
-                <b:property name="extendedMetadata">
-                    <b:bean class="org.springframework.security.saml.metadata.ExtendedMetadata">
-                        <b:property name="idpDiscoveryEnabled" value="true"/>
-                        <b:property name="signMetadata" value="false"/>
-                    </b:bean>
-                </b:property>
+                <b:property name="requestSigned" value="false"/>
+                <b:property name="entityBaseURL" value="https://cbioportal.dfci.harvard.edu:8443/cbioportal"/>
+<!--                <b:property name="extendedMetadata">-->
+<!--                    <b:bean class="org.springframework.security.saml.metadata.ExtendedMetadata">-->
+<!--                        <b:property name="idpDiscoveryEnabled" value="true"/>-->
+<!--                        <b:property name="signMetadata" value="false"/>-->
+<!--                    </b:bean>-->
+<!--                </b:property>-->
             </b:bean>
         </b:constructor-arg>
     </b:bean>
@@ -395,7 +397,14 @@
     </b:bean>
 
     <!-- Provider of default SAML Context -->
-    <b:bean id="contextProvider" class="org.springframework.security.saml.context.SAMLContextProviderImpl"/>
+    <b:bean id="contextProvider" class="org.springframework.security.saml.context.SAMLContextProviderLB">
+        <b:property name="scheme" value="https"/>
+        <b:property name="serverName" value="cbioportal.dfci.harvard.edu"/>
+        <b:property name="serverPort" value="8443"/>
+        <b:property name="includeServerPortInRequestURL" value="true"/>
+        <b:property name="contextPath" value="/cbioportal"/>
+        
+    </b:bean>
 
     <!-- Processing filter for WebSSO profile messages -->
     <b:bean id="samlWebSSOProcessingFilter" class="org.springframework.security.saml.SAMLProcessingFilter">
