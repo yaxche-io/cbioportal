@@ -81,6 +81,7 @@ public class TreatmentServiceImpl implements TreatmentService {
         return treatments.stream()
             .flatMap(t -> createPatientTreatmentRowsForTreatment(t, treatmentsByPatient, samplesByPatient))
             .peek(row -> row.setFrequency((float)row.getCount() / sampleCount))
+            .filter(PatientTreatmentRow::getReceived)
             .collect(Collectors.toList());
     }
 
