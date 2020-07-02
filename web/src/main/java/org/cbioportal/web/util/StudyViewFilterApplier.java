@@ -268,7 +268,7 @@ public class StudyViewFilterApplier {
 
         Map<String, PatientTreatmentRow> rows = treatmentService.getAllPatientTreatmentRows(sampleIds, studyIds)
             .stream()
-            .collect(Collectors.toMap(PatientTreatmentRow::calculateKey, Function.identity()));
+            .collect(Collectors.toMap(PatientTreatmentRow::toString, Function.identity()));
         
         return identifiers.stream()
             .filter(i -> filters.filter(i, rows))

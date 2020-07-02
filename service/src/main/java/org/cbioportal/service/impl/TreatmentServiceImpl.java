@@ -11,7 +11,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 @Service
@@ -19,22 +18,18 @@ public class TreatmentServiceImpl implements TreatmentService {
     @Autowired
     TreatmentRepository treatmentRepository;
     
-    @Autowired
-    SampleService sampleService;
-    
     @Override
     public List<SampleTreatmentRow> getAllSampleTreatmentRows(List<String> sampleIds, List<String> studyIds) {
-        Integer sampleCount = sampleService.fetchMetaSamples(sampleIds, studyIds).getTotalCount();
         Map<String, List<DatedSample>> samplesByPatient = treatmentRepository.getSamplesByPatient(sampleIds, studyIds);
         Map<String, List<Treatment>> treatmentsByPatient = treatmentRepository.getTreatmentsByPatient(sampleIds, studyIds);
 
         Stream<SampleTreatmentRow> rows = samplesByPatient.keySet().stream()
-            .flatMap(patientId -> streamPatientRows(patientId, samplesByPatient, treatmentsByPatient))
+            .flatMap(patientId -> getSampleTreatmentRowsForPatient(patientId, samplesByPatient, treatmentsByPatient))
             .filter(row -> row.getCount() != 0);
         return flattenAndSortRows(rows);
     }
-
-    private Stream<SampleTreatmentRow> streamPatientRows(
+    
+    private Stream<SampleTreatmentRow> getSampleTreatmentRowsForPatient(
             String patientId,
             Map<String, List<DatedSample>> samplesByPatient,
             Map<String, List<Treatment>> treatmentsByPatient
@@ -45,10 +40,15 @@ public class TreatmentServiceImpl implements TreatmentService {
         Map<String, TreatmentRowTriplet> rows = new HashMap<>();
 
         for (Treatment treatment : treatments) {
+            TreatmentRowTriplet triplet;
+            
             if (!rows.containsKey(treatment.getTreatment())) {
-                rows.put(treatment.getTreatment(), new TreatmentRowTriplet(samples, treatment.getTreatment()));
+                triplet = new TreatmentRowTriplet(samples, treatment.getTreatment());
+                rows.put(treatment.getTreatment(), triplet);
+            } else {
+                triplet = rows.get(treatment.getTreatment());
             }
-            TreatmentRowTriplet triplet = rows.get(treatment.getTreatment());
+            
             triplet.moveSamplesToPost(treatment);
         }
 
@@ -73,69 +73,48 @@ public class TreatmentServiceImpl implements TreatmentService {
 
     @Override
     public List<PatientTreatmentRow> getAllPatientTreatmentRows(List<String> sampleIds, List<String> studyIds) {
-        Integer sampleCount = sampleService.fetchMetaSamples(sampleIds, studyIds).getTotalCount();
         Map<String, List<Treatment>> treatmentsByPatient = treatmentRepository.getTreatmentsByPatient(sampleIds, studyIds);
         Map<String, List<DatedSample>> samplesByPatient = treatmentRepository.getSamplesByPatient(sampleIds, studyIds);
         Set<String> treatments = treatmentRepository.getAllUniqueTreatments(sampleIds, studyIds);
         
         return treatments.stream()
-            .flatMap(t -> createPatientTreatmentRowsForTreatment(t, treatmentsByPatient, samplesByPatient))
-            .peek(row -> row.setFrequency((float)row.getCount() / sampleCount))
-            .filter(PatientTreatmentRow::getReceived)
+            .map(t -> createPatientTreatmentRowForTreatment(t, treatmentsByPatient, samplesByPatient))
             .collect(Collectors.toList());
     }
 
-    private Stream<PatientTreatmentRow> createPatientTreatmentRowsForTreatment(
+    private PatientTreatmentRow createPatientTreatmentRowForTreatment(
         String treatment,
         Map<String, List<Treatment>> treatmentsByPatient,
         Map<String, List<DatedSample>> samplesByPatient
     ) {
-        int count = (int) matchingPatients(treatment, treatmentsByPatient).count();
+        // find all the patients that have received this treatments
+        List<Map.Entry<String, List<Treatment>>> matchingPatients = matchingPatients(treatment, treatmentsByPatient);
 
-        Set<String> studiesWithTreatment = matchingPatients(treatment, treatmentsByPatient)
+        // from those patients, extract the unique study ids
+        Set<String> studies = matchingPatients
+            .stream()
             .flatMap(entry -> entry.getValue().stream().map(Treatment::getStudyId))
             .collect(Collectors.toSet());
 
-        Set<String> studiesWithoutTreatment = samplesByPatient.values().stream()
-            .flatMap(v -> v.stream().map(DatedSample::getStudyId))
-            .filter(s -> !studiesWithTreatment.contains(s))
-            .collect(Collectors.toSet());
-
-        Set<String> samplesWithTreatment = matchingPatients(treatment, treatmentsByPatient)
+        // from those patients, extract the unique sample ids
+        Set<String> samples = matchingPatients
+            .stream()
             .map(Map.Entry::getKey)
             .flatMap(patient -> samplesByPatient.getOrDefault(patient, new ArrayList<>()).stream())
             .map(DatedSample::getSampleId)
             .collect(Collectors.toSet());
 
-        Set<String> samplesWithoutTreatment = samplesByPatient.values().stream()
-            .flatMap(samples -> samples.stream().map(DatedSample::getSampleId))
-            .filter(s -> !samplesWithTreatment.contains(s))
-            .collect(Collectors.toSet());
 
-
-        PatientTreatmentRow received = new PatientTreatmentRow(
-            true,
-            treatment,
-            count,
-            samplesWithTreatment,
-            studiesWithTreatment
-        );
-        PatientTreatmentRow notReceived = new PatientTreatmentRow(
-            false,
-            treatment,
-            treatmentsByPatient.size() - count,
-            samplesWithoutTreatment,
-            studiesWithoutTreatment
-        );
-        return Stream.of(received, notReceived);
+        return new PatientTreatmentRow(treatment, matchingPatients.size(), samples, studies);
     }
 
-    private Stream<Map.Entry<String, List<Treatment>>> matchingPatients(
+    private List<Map.Entry<String, List<Treatment>>> matchingPatients(
         String treatment,
         Map<String, List<Treatment>> treatmentsByPatient
     ) {
         return treatmentsByPatient.entrySet().stream()
-            .filter(p -> p.getValue().stream().anyMatch(t -> t.getTreatment().equals(treatment)));
+            .filter(p -> p.getValue().stream().anyMatch(t -> t.getTreatment().equals(treatment)))
+            .collect(toList());
     }
 
 
@@ -151,7 +130,7 @@ public class TreatmentServiceImpl implements TreatmentService {
      * treatments. Each call will move samples taken 
      */
     private static class TreatmentRowTriplet {
-        private List<DatedSample> pre, post, unknown;
+        private final List<DatedSample> pre, post, unknown;
         private final String treatment;
         private final Set<String> studyIds;
 
