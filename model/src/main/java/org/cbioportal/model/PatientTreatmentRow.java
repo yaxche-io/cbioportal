@@ -55,12 +55,15 @@ public class PatientTreatmentRow {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PatientTreatmentRow that = (PatientTreatmentRow) o;
-        return getTreatment().equals(that.getTreatment());
+        return getCount() == that.getCount() &&
+            getTreatment().equals(that.getTreatment()) &&
+            Objects.equals(getSamples(), that.getSamples()) &&
+            Objects.equals(getStudies(), that.getStudies());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getTreatment());
+        return Objects.hash(getTreatment(), getCount(), getSamples(), getStudies());
     }
 
     public void add(SampleTreatmentRow toAdd) {

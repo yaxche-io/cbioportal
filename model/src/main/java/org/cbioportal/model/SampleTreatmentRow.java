@@ -1,5 +1,6 @@
 package org.cbioportal.model;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class SampleTreatmentRow {
@@ -67,5 +68,22 @@ public class SampleTreatmentRow {
         setCount(getCount() + toAdd.getCount());
         getSamples().addAll(toAdd.getSamples());
         getStudies().addAll(toAdd.getStudies());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SampleTreatmentRow that = (SampleTreatmentRow) o;
+        return getCount() == that.getCount() &&
+            getTime() == that.getTime() &&
+            getTreatment().equals(that.getTreatment()) &&
+            Objects.equals(getSamples(), that.getSamples()) &&
+            Objects.equals(getStudies(), that.getStudies());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getTime(), getTreatment(), getCount(), getSamples(), getStudies());
     }
 }

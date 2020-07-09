@@ -71,53 +71,6 @@ public class TreatmentServiceImpl implements TreatmentService {
     }
 
 
-    @Override
-    public List<PatientTreatmentRow> getAllPatientTreatmentRows(List<String> sampleIds, List<String> studyIds) {
-        Map<String, List<Treatment>> treatmentsByPatient = treatmentRepository.getTreatmentsByPatient(sampleIds, studyIds);
-        Map<String, List<DatedSample>> samplesByPatient = treatmentRepository.getSamplesByPatient(sampleIds, studyIds);
-        Set<String> treatments = treatmentRepository.getAllUniqueTreatments(sampleIds, studyIds);
-        
-        return treatments.stream()
-            .map(t -> createPatientTreatmentRowForTreatment(t, treatmentsByPatient, samplesByPatient))
-            .collect(Collectors.toList());
-    }
-
-    private PatientTreatmentRow createPatientTreatmentRowForTreatment(
-        String treatment,
-        Map<String, List<Treatment>> treatmentsByPatient,
-        Map<String, List<DatedSample>> samplesByPatient
-    ) {
-        // find all the patients that have received this treatments
-        List<Map.Entry<String, List<Treatment>>> matchingPatients = matchingPatients(treatment, treatmentsByPatient);
-
-        // from those patients, extract the unique study ids
-        Set<String> studies = matchingPatients
-            .stream()
-            .flatMap(entry -> entry.getValue().stream().map(Treatment::getStudyId))
-            .collect(Collectors.toSet());
-
-        // from those patients, extract the unique sample ids
-        Set<String> samples = matchingPatients
-            .stream()
-            .map(Map.Entry::getKey)
-            .flatMap(patient -> samplesByPatient.getOrDefault(patient, new ArrayList<>()).stream())
-            .map(DatedSample::getSampleId)
-            .collect(Collectors.toSet());
-
-
-        return new PatientTreatmentRow(treatment, matchingPatients.size(), samples, studies);
-    }
-
-    private List<Map.Entry<String, List<Treatment>>> matchingPatients(
-        String treatment,
-        Map<String, List<Treatment>> treatmentsByPatient
-    ) {
-        return treatmentsByPatient.entrySet().stream()
-            .filter(p -> p.getValue().stream().anyMatch(t -> t.getTreatment().equals(treatment)))
-            .collect(toList());
-    }
-
-
     /**
      * For a given treatment, you can have samples that are taken
      * before (pre), after (post), or that don't have a date (unknown)
@@ -181,5 +134,50 @@ public class TreatmentServiceImpl implements TreatmentService {
                     .collect(Collectors.toSet());
         }
     }
-    
+
+    @Override
+    public List<PatientTreatmentRow> getAllPatientTreatmentRows(List<String> sampleIds, List<String> studyIds) {
+        Map<String, List<Treatment>> treatmentsByPatient = treatmentRepository.getTreatmentsByPatient(sampleIds, studyIds);
+        Map<String, List<DatedSample>> samplesByPatient = treatmentRepository.getSamplesByPatient(sampleIds, studyIds);
+        Set<String> treatments = treatmentRepository.getAllUniqueTreatments(sampleIds, studyIds);
+
+        return treatments.stream()
+            .map(t -> createPatientTreatmentRowForTreatment(t, treatmentsByPatient, samplesByPatient))
+            .collect(Collectors.toList());
+    }
+
+    private PatientTreatmentRow createPatientTreatmentRowForTreatment(
+        String treatment,
+        Map<String, List<Treatment>> treatmentsByPatient,
+        Map<String, List<DatedSample>> samplesByPatient
+    ) {
+        // find all the patients that have received this treatments
+        List<Map.Entry<String, List<Treatment>>> matchingPatients = matchingPatients(treatment, treatmentsByPatient);
+
+        // from those patients, extract the unique study ids
+        Set<String> studies = matchingPatients
+            .stream()
+            .flatMap(entry -> entry.getValue().stream().map(Treatment::getStudyId))
+            .collect(Collectors.toSet());
+
+        // from those patients, extract the unique sample ids
+        Set<String> samples = matchingPatients
+            .stream()
+            .map(Map.Entry::getKey)
+            .flatMap(patient -> samplesByPatient.getOrDefault(patient, new ArrayList<>()).stream())
+            .map(DatedSample::getSampleId)
+            .collect(Collectors.toSet());
+
+
+        return new PatientTreatmentRow(treatment, matchingPatients.size(), samples, studies);
+    }
+
+    private List<Map.Entry<String, List<Treatment>>> matchingPatients(
+        String treatment,
+        Map<String, List<Treatment>> treatmentsByPatient
+    ) {
+        return treatmentsByPatient.entrySet().stream()
+            .filter(p -> p.getValue().stream().anyMatch(t -> t.getTreatment().equals(treatment)))
+            .collect(toList());
+    }
 }
