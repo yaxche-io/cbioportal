@@ -31,7 +31,7 @@ public class TreatmentControllerTest {
     private TreatmentService treatmentService;
     
     @Bean
-    private TreatmentService treatmentService() {
+    public TreatmentService treatmentService() {
         return Mockito.mock(TreatmentService.class);
     }
 
