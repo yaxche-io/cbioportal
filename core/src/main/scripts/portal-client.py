@@ -1,7 +1,7 @@
 #! /usr/bin/python
 
 #
-# This scipt is a test of portal/cgds access from external client 
+# This scipt is a test of portal/cgds access from external client
 # while spring-security is in place.
 #
 # The client takes two credentials: a valid webservice url, and a user credential
@@ -34,7 +34,7 @@ def execute_portal_call(url, credential):
 
     try:
         urlOpener = urllib2.build_opener()
-        urlOpener.addheaders.append(('Cookie', 'JSESSIONID=' + credential))
+        urlOpener.addheaders.append(("Cookie", "JSESSIONID=" + credential))
         response = urlOpener.open(url)
     except IOError:
         print >> ERROR_FILE, "error fetching url: " + url
@@ -42,30 +42,32 @@ def execute_portal_call(url, credential):
 
     print >> OUTPUT_FILE, response.read()
 
+
 # ------------------------------------------------------------------------------
 # The big deal main.
 
+
 def main():
 
-    help_text = 'portal-client.py --url [properly constructed portal url] --credential [user credential]'
+    help_text = "portal-client.py --url [properly constructed portal url] --credential [user credential]"
 
-	# parse command line options
+    # parse command line options
     try:
         opts, args = getopt.getopt(sys.argv[1:], "", ["url=", "credential="])
     except getopt.error, msg:
         print >> ERROR_FILE, help_text
         sys.exit(2)
 
-	# process the options  
-    url = ''
-    credential = ''
+    # process the options
+    url = ""
+    credential = ""
     for o, a in opts:
         if o == "--url":
             url = a
         elif o == "--credential":
             credential = a
 
-    if url == '' or credential == '':
+    if url == "" or credential == "":
         print >> ERROR_FILE, help_text
         sys.exit(2)
 
@@ -75,5 +77,5 @@ def main():
 # ------------------------------------------------------------------------------
 # lets shoot this f'in film...
 # ------------------------------------------------------------------------------
-if __name__ == '__main__':
-	main()
+if __name__ == "__main__":
+    main()

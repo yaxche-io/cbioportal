@@ -20,7 +20,7 @@ from importer import validateStudies, cbioportal_common
 
 
 # globals:
-PORTAL_INFO_DIR = 'test_data/api_json_system_tests'
+PORTAL_INFO_DIR = "test_data/api_json_system_tests"
 
 
 # FIXME: replace by contextlib.redirect_stdout when moving to Python 3.4+
@@ -62,8 +62,12 @@ class ValidateStudiesSystemTester(unittest.TestCase):
 
         # Build up arguments and run
         print("===study 0")
-        args = ['--list-of-studies', 'test_data/study_es_0/',
-                '--portal_info_dir', PORTAL_INFO_DIR]
+        args = [
+            "--list-of-studies",
+            "test_data/study_es_0/",
+            "--portal_info_dir",
+            PORTAL_INFO_DIR,
+        ]
         args = validateStudies.interface(args)
         exit_status = validateStudies.main(args)
         self.assertEqual(0, exit_status)
@@ -73,8 +77,12 @@ class ValidateStudiesSystemTester(unittest.TestCase):
 
         # Build up arguments and run
         print("===study 1")
-        args = ['--list-of-studies', 'test_data/study_es_1/',
-                '--portal_info_dir', PORTAL_INFO_DIR]
+        args = [
+            "--list-of-studies",
+            "test_data/study_es_1/",
+            "--portal_info_dir",
+            PORTAL_INFO_DIR,
+        ]
         args = validateStudies.interface(args)
         exit_status = validateStudies.main(args)
         self.assertEqual(1, exit_status)
@@ -84,8 +92,12 @@ class ValidateStudiesSystemTester(unittest.TestCase):
 
         # Build up arguments and run
         print("===study invalid")
-        args = ['--list-of-studies', 'test_data/study_es_invalid/',
-                '--portal_info_dir', PORTAL_INFO_DIR]
+        args = [
+            "--list-of-studies",
+            "test_data/study_es_invalid/",
+            "--portal_info_dir",
+            PORTAL_INFO_DIR,
+        ]
         args = validateStudies.interface(args)
         exit_status = validateStudies.main(args)
         self.assertEqual(1, exit_status)
@@ -95,8 +107,12 @@ class ValidateStudiesSystemTester(unittest.TestCase):
 
         # Build up arguments and run
         print("===study 3")
-        args = ['--list-of-studies', 'test_data/study_es_3/',
-                '--portal_info_dir', PORTAL_INFO_DIR]
+        args = [
+            "--list-of-studies",
+            "test_data/study_es_3/",
+            "--portal_info_dir",
+            PORTAL_INFO_DIR,
+        ]
         args = validateStudies.interface(args)
         exit_status = validateStudies.main(args)
         self.assertEqual(0, exit_status)
@@ -106,9 +122,14 @@ class ValidateStudiesSystemTester(unittest.TestCase):
 
         # Build up arguments and run
         print("===study0,1,invalid,3")
-        args = ['--root-directory', 'test_data',
-                '--list-of-studies', 'study_es_0,study_es_1,study_es_invalid,study_es_3',
-                '--portal_info_dir', PORTAL_INFO_DIR]
+        args = [
+            "--root-directory",
+            "test_data",
+            "--list-of-studies",
+            "study_es_0,study_es_1,study_es_invalid,study_es_3",
+            "--portal_info_dir",
+            PORTAL_INFO_DIR,
+        ]
         args = validateStudies.interface(args)
         exit_status = validateStudies.main(args)
         self.assertEqual(1, exit_status)
@@ -121,28 +142,30 @@ class ValidateStudiesSystemTester(unittest.TestCase):
         # given
         with TemporaryDirectory() as out_dir_path:
             args = [
-                '--root-directory', 'test_data',
-                '--list-of-studies', 'study_various_issues,study_es_0',
-                '--portal_info_dir', PORTAL_INFO_DIR,
-                '--html-folder', out_dir_path
-                ]
+                "--root-directory",
+                "test_data",
+                "--list-of-studies",
+                "study_various_issues,study_es_0",
+                "--portal_info_dir",
+                PORTAL_INFO_DIR,
+                "--html-folder",
+                out_dir_path,
+            ]
             # when
             with redirect_stdout(StringIO()):
                 parsed_args = validateStudies.interface(args)
                 validateStudies.main(parsed_args)
             # then
-            log_file_path = glob.glob(os.path.join(out_dir_path, 'log*.txt'))[0]
+            log_file_path = glob.glob(os.path.join(out_dir_path, "log*.txt"))[0]
             with open(log_file_path) as log_file:
                 log_file_lines = log_file.readlines()
-            self.assertIn('study_various_issues', log_file_lines[0])
+            self.assertIn("study_various_issues", log_file_lines[0])
             last_line_of_first_study = next(
                 index
-                for index, line
-                in enumerate(log_file_lines)
-                if 'Validation complete' in line)
-            self.assertIn(
-                'study_es_0',
-                log_file_lines[last_line_of_first_study + 1])
+                for index, line in enumerate(log_file_lines)
+                if "Validation complete" in line
+            )
+            self.assertIn("study_es_0", log_file_lines[last_line_of_first_study + 1])
 
 
 class ValidateStudiesWithEagerlyFlushingCollapser(unittest.TestCase):
@@ -154,19 +177,23 @@ class ValidateStudiesWithEagerlyFlushingCollapser(unittest.TestCase):
 
     def setUp(self):
         """Make the collapsing log message handler flush more eagerly."""
+
         class EagerFlusher(logging.handlers.MemoryHandler):
             def __init__(self, *args, **kwargs):
                 """Set the buffer capacity to 3 regardless of args."""
                 # leave out any capacity argument from args and kwargs
                 args = args[1:]
-                kwargs = {k: v for k, v in list(kwargs.items()) if k != 'capacity'}
+                kwargs = {k: v for k, v in list(kwargs.items()) if k != "capacity"}
                 # pass 3 as the capacity argument
                 super(EagerFlusher, self).__init__(3, *args, **kwargs)
+
         class EagerFlushingCollapser(
-                cbioportal_common.CollapsingLogMessageHandler,
-                EagerFlusher):
+            cbioportal_common.CollapsingLogMessageHandler, EagerFlusher
+        ):
             """CollapsingLogMessageHandler with EagerFlusher overrides."""
+
             pass
+
         self.original_collapser = cbioportal_common.CollapsingLogMessageHandler
         cbioportal_common.CollapsingLogMessageHandler = EagerFlusher
 
@@ -183,16 +210,23 @@ class ValidateStudiesWithEagerlyFlushingCollapser(unittest.TestCase):
         """
         output_stream = StringIO()
         with redirect_stdout(output_stream):
-            args = validateStudies.interface([
-                '--root-directory', 'test_data',
-                '--list-of-studies', 'study_various_issues/',
-                '--portal_info_dir', PORTAL_INFO_DIR])
+            args = validateStudies.interface(
+                [
+                    "--root-directory",
+                    "test_data",
+                    "--list-of-studies",
+                    "study_various_issues/",
+                    "--portal_info_dir",
+                    PORTAL_INFO_DIR,
+                ]
+            )
             validateStudies.main(args)
         self.assertNotIn(
-            'ERROR',
+            "ERROR",
             output_stream.getvalue(),
-            'The validation errors should not be printed to the console.')
+            "The validation errors should not be printed to the console.",
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main(buffer=True)

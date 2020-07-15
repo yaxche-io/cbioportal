@@ -1,12 +1,13 @@
 import sys
 
+
 def main(argv):
     inputFileName = sys.argv[1]
     outputFileName = sys.argv[2]
     inFile = open(inputFileName)
-    outFile = open(outputFileName, 'wb')
+    outFile = open(outputFileName, "wb")
 
-    #read out meta line
+    # read out meta line
     meta = inFile.readline()
     outFile.write(meta)
 
@@ -14,12 +15,12 @@ def main(argv):
     filteredInteractionCount = 0
 
     for line in inFile:
-        lineSize = len(line.split('\t'))
+        lineSize = len(line.split("\t"))
 
         # This means we are in the section where node data is included in EXTENDED_BINARY_SIF
         if lineSize != 1:
-            sourceName = line.split('\t')[3].lower()
-            sourceNames = sourceName.split(';')
+            sourceName = line.split("\t")[3].lower()
+            sourceNames = sourceName.split(";")
             totalCount = totalCount + 1
             for sourceName in sourceNames:
                 if checkInteractionSource(sourceName):
@@ -29,11 +30,20 @@ def main(argv):
 
     inFile.close()
     outFile.close()
-    print 'Wrote ' + str(filteredInteractionCount) + " interactions out of " + str(totalCount) + " interactions after filtering"
+    print "Wrote " + str(filteredInteractionCount) + " interactions out of " + str(
+        totalCount
+    ) + " interactions after filtering"
 
 
 def checkInteractionSource(source):
-    return (source=='humancyc' or source=='panther' or source=='phosposite' or source=='reactome' or source=='pid')
+    return (
+        source == "humancyc"
+        or source == "panther"
+        or source == "phosposite"
+        or source == "reactome"
+        or source == "pid"
+    )
+
 
 if __name__ == "__main__":
     main(sys.argv)
